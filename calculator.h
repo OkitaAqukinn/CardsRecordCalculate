@@ -5,9 +5,9 @@
 #include <iostream>
 #include <vector>
 
-#define MAX_CARD_RANK 13
-#define MIN_POP_CARDS_NUM 4
-#define MAX_POP_CARDS_NUM 6
+#define MAX_CARD_RANK (13)
+#define MIN_POP_CARDS_NUM (4)
+#define MAX_POP_CARDS_NUM (6)
 
 class CardsBase {
    public:
@@ -54,6 +54,22 @@ class CardsBase {
             return false;
         }
     };
+    bool removeCards(const std::vector<uint8_t>& cards) {
+        std::vector<uint8_t>::iterator it = cards_.begin();
+        for (auto card : cards) {
+            it = std::find(it, cards_.end(), card);
+            if (it != cards_.end()) {
+                cards_.erase(it);
+                remain_cards_num_--;
+            } else {
+                std::cout << "Card not found:" << card
+                          << ". Please check the integrity of current cards"
+                          << std::endl;
+                return false;
+            }
+        }
+        return true;
+    };
     uint8_t getSuitNum() const { return suit_num_; };
     void setSuitNum(uint8_t suit_num) { suit_num_ = suit_num; };
     uint16_t getTotalCardsNum() const { return total_cards_num_; };
@@ -78,6 +94,7 @@ class CardsEventCalculator {
     ~CardsEventCalculator(){};
 
    public:
+    CardsBase getCardsBase() const { return current_cards_; }
     void setCardsIndex(uint8_t index) { index_ = index; }
     uint8_t getCardsIndex() const { return index_; }
     void setCardsId(const std::string& id) { id_ = id; }
