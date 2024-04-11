@@ -19,7 +19,8 @@ enum class SubCmdType : int {
     kDeleteCards = 2,
     kModifyCards = 3,
     kLoadCards = 4,
-    kResetAllCards = 5
+    kResetCards = 5,
+    kResetAllCards = 6
 };
 typedef struct {
     int subCmd;

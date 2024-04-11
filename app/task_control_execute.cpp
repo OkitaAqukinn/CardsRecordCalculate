@@ -3,7 +3,9 @@
 #include "thread_safe_queue.h"
 
 threadsafe_queue<cards_receive_data_t, 1> cards_send_data_queue;
+
 TaskControlExecute::TaskControlExecute() {}
+
 void TaskControlExecute::update(const cards_receive_data_t &data) {
     std::cout << "TaskControlExecute receive subCmd: " << data.subCmd
               << std::endl;
@@ -53,6 +55,15 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
                     load(data.cards_id).getCardsBase().getCards();
             }
             cards_send_data_queue.push(send_data);
+        } break;
+        case SubCmdType::kResetCards: {
+            if (data.switch_type ==
+                static_cast<int>(SwitchCardType::kSwitchByIndex)) {
+                delCalculator(data.cards_index);
+            } else if (data.switch_type ==
+                       static_cast<int>(SwitchCardType::kSwitchById)) {
+                delCalculator(data.cards_id);
+            }
         } break;
         case SubCmdType::kResetAllCards: {
             resetAllCalculator();
@@ -106,25 +117,33 @@ void TaskControlExecute::addCalculator(int index, std::string id) {
 }
 
 void TaskControlExecute::delCalculator(int index) {
-    // if (!checkIfIndexValid(index)) {
-    //     addCalculator(index);
-    // }
-    // std::vector<CardsEventCalculator>::iterator it =
-    // cards_calculator_.begin(); for (it; it != cards_calculator_.end(); it++)
-    // {
-    //     if (it->getCardsIndex() == index) {
-    //         bool result = it->getCardsBase().removeCards(cards);
-    //         std::cout << "del result: " << result << ", index: " << index
-    //                   << std::endl;
-    //     }
-    // }
+    if (!checkIfIndexValid(index)) {
+        std::cout << "cannot found delCalculator, index: " << index
+                  << std::endl;
+        return;
+    }
+    std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
+    for (it; it != cards_calculator_.end(); it++) {
+        if (it->getCardsIndex() == index) {
+            cards_calculator_.erase(it);
+            std::cout << "delCalculator successfully, index: " << index
+                      << std::endl;
+        }
+    }
 }
 
 void TaskControlExecute::delCalculator(std::string id) {
-    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
-        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, 0, id);
-    cards_calculator_.push_back(*tmp_calc_ptr);
-    std::cout << id << " id already push back to vector" << std::endl;
+    if (!checkIfIdValid(id)) {
+        std::cout << "cannot found delCalculator, index: " << id << std::endl;
+        return;
+    }
+    std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
+    for (it; it != cards_calculator_.end(); it++) {
+        if (it->getCardsId() == id) {
+            cards_calculator_.erase(it);
+            std::cout << "delCalculator successfully, id: " << id << std::endl;
+        }
+    }
 }
 
 void TaskControlExecute::del(int index, const std::vector<int> &cards) {
@@ -155,8 +174,33 @@ void TaskControlExecute::del(std::string id, const std::vector<int> &cards) {
     }
 }
 
-void TaskControlExecute::modify(int index, const std::vector<int> &cards) {}
+void TaskControlExecute::modify(int index, const std::vector<int> &cards) {
+    if (!checkIfIndexValid(index)) {
+        addCalculator(index);
+    }
+    std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
+    for (it; it != cards_calculator_.end(); it++) {
+        if (it->getCardsIndex() == index) {
+            it->getCardsBase().setCards(cards, MAX_CARD_SUIT_NUM);
+            std::cout << "modify successfully, index: " << index << std::endl;
+            return;
+        }
+    }
+    std::cout << "modify failed, index: " << index << std::endl;
+}
 void TaskControlExecute::modify(std::string id, const std::vector<int> &cards) {
+    if (!checkIfIdValid(id)) {
+        addCalculator(id);
+    }
+    std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
+    for (it; it != cards_calculator_.end(); it++) {
+        if (it->getCardsId() == id) {
+            it->getCardsBase().setCards(cards, MAX_CARD_SUIT_NUM);
+            std::cout << "modify successfully, id: " << id << std::endl;
+            return;
+        }
+    }
+    std::cout << "modify failed, id: " << id << std::endl;
 }
 
 CardsEventCalculator TaskControlExecute::load(int index) {
@@ -166,7 +210,7 @@ CardsEventCalculator TaskControlExecute::load(int index) {
             return *it;
         }
     }
-    std::cout << "del failed, index: " << index << std::endl;
+    std::cout << "load failed, index: " << index << std::endl;
     return CardsEventCalculator(0, 255, "-1");
 }
 
@@ -177,7 +221,7 @@ CardsEventCalculator TaskControlExecute::load(std::string id) {
             return *it;
         }
     }
-    std::cout << "del failed, id: " << id << std::endl;
+    std::cout << ";oad failed, id: " << id << std::endl;
     return CardsEventCalculator(0, 255, "-1");
 }
 
