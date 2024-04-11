@@ -1,11 +1,15 @@
 #ifndef CALCULATOR_H
 #define CALCULATOR_H
+
 #include <algorithm>
 #include <iostream>
 #include <vector>
+
 #define MAX_CARD_RANK (13)
+#define MAX_CARD_PATTERN (4)
 #define MIN_POP_CARDS_NUM (4)
 #define MAX_POP_CARDS_NUM (6)
+
 class CardsBase {
    public:
     CardsBase(int suit_num) {
@@ -19,7 +23,7 @@ class CardsBase {
     void reset() {
         cards_.clear();
         for (int i = 0; i < suit_num_; i++) {
-            for (int j = 1; j <= MAX_CARD_RANK; j++) {
+            for (int j = 1; j <= MAX_CARD_RANK * MAX_CARD_PATTERN; j++) {
                 addCard(j);
             }
         }
@@ -104,17 +108,21 @@ class CardsEventCalculator {
     double nextPairProbabilityCalc() {
         // 组合公式C(n,m) = n!/(m!(n-m)!)
         int kPickCardsNum = 4;
-        int total_count =
-            factorial(current_cards_.getRemainCardsNum()) /
-            (factorial(kPickCardsNum) *
-             factorial(current_cards_.getRemainCardsNum() - kPickCardsNum));
+        uint64_t tmp_multiplicate = combinator(
+            current_cards_.getRemainCardsNum(),
+            (current_cards_.getRemainCardsNum() - kPickCardsNum + 1));
+        uint64_t total_count = tmp_multiplicate / factorial(kPickCardsNum);
+        std::cout
+            << "nextPairProbabilityCalc current total combination counts: "
+            << total_count << std::endl;
         if (total_count <= 0) {
             std::cout << "nextPairProbabilityCalc failed: "
                       << current_cards_.getRemainCardsNum() << std::endl;
             return 0.0;
         }
+        return 0.0;
         std::vector<int>::iterator it = current_cards_.getCards().begin();
-        int pair_count = 0;
+        uint64_t unmatched_count = 0;
         for (auto i = it; i != current_cards_.getCards().end(); i) {
             for (auto j = i + 1; j != current_cards_.getCards().end(); j++) {
                 for (auto k = j + 1; k != current_cards_.getCards().end();
@@ -125,13 +133,21 @@ class CardsEventCalculator {
                             *j != *l && *k != *l) {
                             continue;
                         } else {
-                            pair_count++;
+                            unmatched_count++;
                         }
                     }
                 }
             }
         }
-        return static_cast<double>(pair_count) /
+        std::cout << "nextPairProbabilityCalc current unmatched counts: "
+                  << unmatched_count << std::endl;
+        if (total_count < unmatched_count) {
+            std::cout << "nextPairProbabilityCalc failed for unmatched_count "
+                         "incorrect:"
+                      << unmatched_count << std::endl;
+            return 0.0;
+        }
+        return static_cast<double>(total_count - unmatched_count) /
                static_cast<double>(total_count);
     }
 
@@ -141,6 +157,16 @@ class CardsEventCalculator {
             return 1;
         } else {
             return n * factorial(n - 1);
+        }
+    }
+    uint64_t combinator(int n, int m) {
+        if (n == m) {
+            return n;
+        }
+        if (n == 0 || n == 1 || n < m) {
+            return 1;
+        } else {
+            return n * combinator((n - 1), m);
         }
     }
 

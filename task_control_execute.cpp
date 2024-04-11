@@ -15,15 +15,15 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
             if (data.switch_type ==
                 static_cast<int>(SwitchCardType::kSwitchByIndex)) {
                 del(data.cards_index, data.operate_cards);
-                // std::cout << "result: "
-                //           << getCalculatorPairProbability(data.cards_index)
-                //           << std::endl;
+                std::cout << "result: "
+                          << getCalculatorPairProbability(data.cards_index)
+                          << std::endl;
             } else if (data.switch_type ==
                        static_cast<int>(SwitchCardType::kSwitchById)) {
                 del(data.cards_id, data.operate_cards);
-                // std::cout << "result: "
-                //           << getCalculatorPairProbability(data.cards_id)
-                //           << std::endl;
+                std::cout << "result: "
+                          << getCalculatorPairProbability(data.cards_id)
+                          << std::endl;
             }
         } break;
         case SubCmdType::kModifyCards: {
