@@ -1,17 +1,14 @@
 #ifndef CALCULATOR_H
 #define CALCULATOR_H
-
 #include <algorithm>
 #include <iostream>
 #include <vector>
-
 #define MAX_CARD_RANK (13)
 #define MIN_POP_CARDS_NUM (4)
 #define MAX_POP_CARDS_NUM (6)
-
 class CardsBase {
    public:
-    CardsBase(uint8_t suit_num) {
+    CardsBase(int suit_num) {
         suit_num_ = suit_num;
         reset();
     };
@@ -21,8 +18,8 @@ class CardsBase {
    public:
     void reset() {
         cards_.clear();
-        for (uint8_t i = 0; i < suit_num_; i++) {
-            for (uint8_t j = 1; j <= MAX_CARD_RANK; j++) {
+        for (int i = 0; i < suit_num_; i++) {
+            for (int j = 1; j <= MAX_CARD_RANK; j++) {
                 addCard(j);
             }
         }
@@ -32,16 +29,16 @@ class CardsBase {
                   << total_cards_num_
                   << "remain_cards_num_:" << remain_cards_num_ << std::endl;
     };
-    void addCard(uint8_t card) {
+    void addCard(int card) {
         cards_.push_back(card);
         remain_cards_num_++;
     };
-    void addCard(std::vector<uint8_t> cards) {
+    void addCard(std::vector<int> cards) {
         cards_.insert(cards_.end(), cards.begin(), cards.end());
         remain_cards_num_ += cards.size();
     };
-    bool removeCard(uint8_t card) {
-        std::vector<uint8_t>::iterator it =
+    bool removeCard(int card) {
+        std::vector<int>::iterator it =
             std::find(cards_.begin(), cards_.end(), card);
         if (it != cards_.end()) {
             cards_.erase(it);
@@ -54,8 +51,8 @@ class CardsBase {
             return false;
         }
     };
-    bool removeCards(const std::vector<uint8_t>& cards) {
-        std::vector<uint8_t>::iterator it = cards_.begin();
+    bool removeCards(const std::vector<int>& cards) {
+        std::vector<int>::iterator it = cards_.begin();
         for (auto card : cards) {
             it = std::find(it, cards_.end(), card);
             if (it != cards_.end()) {
@@ -70,23 +67,22 @@ class CardsBase {
         }
         return true;
     };
-    uint8_t getSuitNum() const { return suit_num_; };
-    void setSuitNum(uint8_t suit_num) { suit_num_ = suit_num; };
-    uint16_t getTotalCardsNum() const { return total_cards_num_; };
-    uint16_t getRemainCardsNum() const { return remain_cards_num_; };
-    std::vector<uint8_t> getCards() const { return cards_; };
-    void setCards(const std::vector<uint8_t>& cards) { cards_ = cards; }
+    int getSuitNum() const { return suit_num_; };
+    void setSuitNum(int suit_num) { suit_num_ = suit_num; };
+    int getTotalCardsNum() const { return total_cards_num_; };
+    int getRemainCardsNum() const { return remain_cards_num_; };
+    std::vector<int> getCards() const { return cards_; };
+    void setCards(const std::vector<int>& cards) { cards_ = cards; }
 
    private:
-    uint8_t suit_num_;
-    uint16_t total_cards_num_;
-    uint16_t remain_cards_num_;
-    std::vector<uint8_t> cards_;
+    int suit_num_;
+    int total_cards_num_;
+    int remain_cards_num_;
+    std::vector<int> cards_;
 };
-
 class CardsEventCalculator {
    public:
-    CardsEventCalculator(uint8_t suit_num, uint8_t index, std::string id) {
+    CardsEventCalculator(int suit_num, int index, std::string id) {
         reset(suit_num);
         index_ = index;
         id_ = id;
@@ -95,27 +91,30 @@ class CardsEventCalculator {
 
    public:
     CardsBase getCardsBase() const { return current_cards_; }
-    void setCardsIndex(uint8_t index) { index_ = index; }
-    uint8_t getCardsIndex() const { return index_; }
+    void setCardsIndex(int index) { index_ = index; }
+    int getCardsIndex() const { return index_; }
     void setCardsId(const std::string& id) { id_ = id; }
     std::string getCardsId() const { return id_; }
 
    public:
-    void reset(uint8_t suit_num) {
+    void reset(int suit_num) {
         current_cards_.setSuitNum(suit_num);
         current_cards_.reset();
     }
     double nextPairProbabilityCalc() {
         // 组合公式C(n,m) = n!/(m!(n-m)!)
-        uint8_t kPickCardsNum = 4;
-        uint16_t total_count =
+        int kPickCardsNum = 4;
+        int total_count =
             factorial(current_cards_.getRemainCardsNum()) /
             (factorial(kPickCardsNum) *
              factorial(current_cards_.getRemainCardsNum() - kPickCardsNum));
-
-        std::vector<uint8_t>::iterator it = current_cards_.getCards().begin();
-
-        uint32_t pair_count = 0;
+        if (total_count <= 0) {
+            std::cout << "nextPairProbabilityCalc failed: "
+                      << current_cards_.getRemainCardsNum() << std::endl;
+            return 0.0;
+        }
+        std::vector<int>::iterator it = current_cards_.getCards().begin();
+        int pair_count = 0;
         for (auto i = it; i != current_cards_.getCards().end(); i) {
             for (auto j = i + 1; j != current_cards_.getCards().end(); j++) {
                 for (auto k = j + 1; k != current_cards_.getCards().end();
@@ -147,8 +146,7 @@ class CardsEventCalculator {
 
    private:
     CardsBase current_cards_;
-    uint8_t index_;
+    int index_;
     std::string id_;
 };
-
 #endif  // CALCULATOR_H
