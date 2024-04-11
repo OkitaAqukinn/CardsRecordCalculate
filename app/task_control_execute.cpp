@@ -9,7 +9,13 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
               << std::endl;
     switch (static_cast<SubCmdType>(data.subCmd)) {
         case SubCmdType::kAddCards: {
-            add(data.cards_index, data.cards_id, data.operate_cards);
+            if (data.switch_type ==
+                static_cast<int>(SwitchCardType::kSwitchByIndex)) {
+                addCalculator(data.cards_index);
+            } else if (data.switch_type ==
+                       static_cast<int>(SwitchCardType::kSwitchById)) {
+                addCalculator(data.cards_id);
+            }
         } break;
         case SubCmdType::kDeleteCards: {
             if (data.switch_type ==
@@ -56,6 +62,7 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
         }
     }
 }
+
 bool TaskControlExecute::checkIfIndexValid(int index) {
     std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
     for (it; it != cards_calculator_.end(); it++) {
@@ -66,6 +73,7 @@ bool TaskControlExecute::checkIfIndexValid(int index) {
     std::cout << "Check index failed: " << index << std::endl;
     return false;
 }
+
 bool TaskControlExecute::checkIfIdValid(std::string id) {
     std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
     for (it; it != cards_calculator_.end(); it++) {
@@ -76,8 +84,49 @@ bool TaskControlExecute::checkIfIdValid(std::string id) {
     std::cout << "Check id failed: " << id << std::endl;
     return false;
 }
-void TaskControlExecute::add(int index, std::string id,
-                             const std::vector<int> &cards) {}
+
+void TaskControlExecute::addCalculator(int index) {
+    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
+        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, index, "0");
+    cards_calculator_.push_back(*tmp_calc_ptr);
+    std::cout << index << " index already push back to vector" << std::endl;
+}
+
+void TaskControlExecute::addCalculator(std::string id) {
+    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
+        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, 0, id);
+    cards_calculator_.push_back(*tmp_calc_ptr);
+    std::cout << id << " id already push back to vector" << std::endl;
+}
+
+void TaskControlExecute::addCalculator(int index, std::string id) {
+    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
+        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, index, id);
+    cards_calculator_.push_back(*tmp_calc_ptr);
+}
+
+void TaskControlExecute::delCalculator(int index) {
+    // if (!checkIfIndexValid(index)) {
+    //     addCalculator(index);
+    // }
+    // std::vector<CardsEventCalculator>::iterator it =
+    // cards_calculator_.begin(); for (it; it != cards_calculator_.end(); it++)
+    // {
+    //     if (it->getCardsIndex() == index) {
+    //         bool result = it->getCardsBase().removeCards(cards);
+    //         std::cout << "del result: " << result << ", index: " << index
+    //                   << std::endl;
+    //     }
+    // }
+}
+
+void TaskControlExecute::delCalculator(std::string id) {
+    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
+        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, 0, id);
+    cards_calculator_.push_back(*tmp_calc_ptr);
+    std::cout << id << " id already push back to vector" << std::endl;
+}
+
 void TaskControlExecute::del(int index, const std::vector<int> &cards) {
     if (!checkIfIndexValid(index)) {
         addCalculator(index);
@@ -91,6 +140,7 @@ void TaskControlExecute::del(int index, const std::vector<int> &cards) {
         }
     }
 }
+
 void TaskControlExecute::del(std::string id, const std::vector<int> &cards) {
     if (!checkIfIdValid(id)) {
         addCalculator(id);
@@ -104,9 +154,11 @@ void TaskControlExecute::del(std::string id, const std::vector<int> &cards) {
         }
     }
 }
+
 void TaskControlExecute::modify(int index, const std::vector<int> &cards) {}
 void TaskControlExecute::modify(std::string id, const std::vector<int> &cards) {
 }
+
 CardsEventCalculator TaskControlExecute::load(int index) {
     std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
     for (it; it != cards_calculator_.end(); it++) {
@@ -117,6 +169,7 @@ CardsEventCalculator TaskControlExecute::load(int index) {
     std::cout << "del failed, index: " << index << std::endl;
     return CardsEventCalculator(0, 255, "-1");
 }
+
 CardsEventCalculator TaskControlExecute::load(std::string id) {
     std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
     for (it; it != cards_calculator_.end(); it++) {
@@ -127,26 +180,11 @@ CardsEventCalculator TaskControlExecute::load(std::string id) {
     std::cout << "del failed, id: " << id << std::endl;
     return CardsEventCalculator(0, 255, "-1");
 }
-void TaskControlExecute::addCalculator(int index) {
-    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
-        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, index, "0");
-    cards_calculator_.push_back(*tmp_calc_ptr);
-    std::cout << index << " index already push back to vector" << std::endl;
-}
-void TaskControlExecute::addCalculator(std::string id) {
-    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
-        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, 0, id);
-    cards_calculator_.push_back(*tmp_calc_ptr);
-    std::cout << id << " id already push back to vector" << std::endl;
-}
-void TaskControlExecute::addCalculator(int index, std::string id) {
-    std::shared_ptr<CardsEventCalculator> tmp_calc_ptr =
-        std::make_shared<CardsEventCalculator>(MAX_CARD_SUIT_NUM, index, id);
-    cards_calculator_.push_back(*tmp_calc_ptr);
-}
+
 double TaskControlExecute::getCalculatorPairProbability(int index) {
     return load(index).nextPairProbabilityCalc();
 }
+
 double TaskControlExecute::getCalculatorPairProbability(std::string id) {
     return load(id).nextPairProbabilityCalc();
 }

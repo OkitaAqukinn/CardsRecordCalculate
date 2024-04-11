@@ -44,16 +44,17 @@ class TaskControlExecute {
    private:
     bool checkIfIndexValid(int index);
     bool checkIfIdValid(std::string id);
-    void add(int index, std::string id, const std::vector<int> &cards);
+    void addCalculator(int index);
+    void addCalculator(std::string id);
+    void addCalculator(int index, std::string id);
+    void delCalculator(int index);
+    void delCalculator(std::string id);
     void del(int index, const std::vector<int> &cards);
     void del(std::string id, const std::vector<int> &cards);
     void modify(int index, const std::vector<int> &cards);
     void modify(std::string id, const std::vector<int> &cards);
     CardsEventCalculator load(int index);
     CardsEventCalculator load(std::string id);
-    void addCalculator(int index);
-    void addCalculator(std::string id);
-    void addCalculator(int index, std::string id);
     void resetAllCalculator() { cards_calculator_.clear(); };
     double getCalculatorPairProbability(int index);
     double getCalculatorPairProbability(std::string id);
