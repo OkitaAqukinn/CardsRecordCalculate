@@ -37,7 +37,7 @@ class CardsBase {
         cards_.push_back(card);
         remain_cards_num_++;
     };
-    void addCard(std::vector<int> cards) {
+    void addCards(std::vector<int> cards) {
         cards_.insert(cards_.end(), cards.begin(), cards.end());
         remain_cards_num_ += cards.size();
     };
@@ -76,7 +76,12 @@ class CardsBase {
     int getTotalCardsNum() const { return total_cards_num_; };
     int getRemainCardsNum() const { return remain_cards_num_; };
     std::vector<int>& getCards() { return cards_; };
-    void setCards(const std::vector<int>& cards) { cards_ = cards; }
+    void setCards(const std::vector<int>& cards, int suit_num) {
+        cards_ = cards;
+        setSuitNum(suit_num);
+        total_cards_num_ = suit_num_ * MAX_CARD_RANK;
+        remain_cards_num_ = cards_.size();
+    }
 
    private:
     int suit_num_;
