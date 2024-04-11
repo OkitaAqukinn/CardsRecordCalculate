@@ -1,7 +1,7 @@
 #include <iostream>
 #include <thread>
 
-#include "task_control_execute.h"
+#include "app/task_control_execute.h"
 #include "thread_safe_queue.h"
 
 threadsafe_queue<cards_receive_data_t, 5> cards_receive_data_queue;
@@ -45,6 +45,7 @@ int main() {
     std::cout << "detectImageChangesTask created!!!" << std::endl;
     std::thread calculator(changeCardsCalculateTask);
     std::cout << "changeCardsCalculateTask created!!!" << std::endl;
+
     detector.join();
     std::cout << "detectImageChangesTask quit!!!" << std::endl;
     calculator.join();

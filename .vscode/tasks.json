@@ -3,13 +3,16 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc.exe 生成活动文件",
-            "command": "D:\\mingw-w64-v10.0.0\\mingw64\\bin\\gcc.exe",
+            "command": "D:/x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0/mingw64/bin/g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-I",
+                "${fileDirname}\\include",
+                "${fileDirname}\\app\\**",
             ],
             "options": {
                 "cwd": "${fileDirname}"
