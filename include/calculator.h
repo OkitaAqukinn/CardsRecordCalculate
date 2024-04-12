@@ -1,13 +1,15 @@
-
 #ifndef CALCULATOR_H
 #define CALCULATOR_H
+
 #include <algorithm>
 #include <iostream>
 #include <vector>
+
 #define MAX_CARD_RANK (13)
 #define MAX_CARD_PATTERN (4)
 #define MIN_POP_CARDS_NUM (4)
 #define MAX_POP_CARDS_NUM (6)
+
 class CardsBase {
    public:
     CardsBase(int suit_num) {

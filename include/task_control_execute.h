@@ -41,6 +41,8 @@ class TaskControlExecute {
 
    public:
     void update(const cards_receive_data_t &data);
+    double calcPairProbability(int index);
+    double calcPairProbability(std::string id);
 
    private:
     bool checkIfIndexValid(int index);
