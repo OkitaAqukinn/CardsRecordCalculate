@@ -42,13 +42,13 @@ void changeCardsCalculateTask() {
             if (tmp_data.switch_type ==
                 static_cast<int>(SwitchCardType::kSwitchByIndex)) {
                 next_pair_probability =
-                    TaskControlExecute::getIns().calcPairProbability(
-                        tmp_data.cards_index);
+                    TaskControlExecute::getIns().getCalculatorPairProbability(
+                        tmp_data.cards_index, PairCardsCalcType::kNormalType);
             } else if (tmp_data.switch_type ==
                        static_cast<int>(SwitchCardType::kSwitchById)) {
                 next_pair_probability =
-                    TaskControlExecute::getIns().calcPairProbability(
-                        tmp_data.cards_id);
+                    TaskControlExecute::getIns().getCalculatorPairProbability(
+                        tmp_data.cards_id, PairCardsCalcType::kNormalType);
             }
             std::cout << "next_pair_probability:" << next_pair_probability
                       << std::endl;
