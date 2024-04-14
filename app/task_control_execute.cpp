@@ -26,9 +26,6 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
             } else if (data.switch_type ==
                        static_cast<int>(SwitchCardType::kSwitchById)) {
                 del(data.cards_id, data.operate_cards);
-                std::cout << "result: "
-                          << getCalculatorPairProbability(data.cards_id)
-                          << std::endl;
             }
         } break;
         case SubCmdType::kModifyCards: {
@@ -69,14 +66,6 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
             std::cout << "Unknown subCmd: " << data.subCmd << std::endl;
         }
     }
-}
-
-double TaskControlExecute::calcPairProbability(int index) {
-    return getCalculatorPairProbability(index);
-}
-
-double TaskControlExecute::calcPairProbability(std::string id) {
-    return getCalculatorPairProbability(id);
 }
 
 bool TaskControlExecute::checkIfIndexValid(int index) {
@@ -231,10 +220,12 @@ CardsEventCalculator TaskControlExecute::load(std::string id) {
     return CardsEventCalculator(0, 255, "-1");
 }
 
-double TaskControlExecute::getCalculatorPairProbability(int index) {
-    return load(index).nextPairProbabilityCalc();
+double TaskControlExecute::getCalculatorPairProbability(
+    int index, PairCardsCalcType type) {
+    return load(index).nextPairProbabilityCalc(type);
 }
 
-double TaskControlExecute::getCalculatorPairProbability(std::string id) {
-    return load(id).nextPairProbabilityCalc();
+double TaskControlExecute::getCalculatorPairProbability(
+    std::string id, PairCardsCalcType type) {
+    return load(id).nextPairProbabilityCalc(type);
 }

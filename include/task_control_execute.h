@@ -41,8 +41,8 @@ class TaskControlExecute {
 
    public:
     void update(const cards_receive_data_t &data);
-    double calcPairProbability(int index);
-    double calcPairProbability(std::string id);
+    double getCalculatorPairProbability(int index, PairCardsCalcType type);
+    double getCalculatorPairProbability(std::string id, PairCardsCalcType type);
 
    private:
     bool checkIfIndexValid(int index);
@@ -59,8 +59,6 @@ class TaskControlExecute {
     CardsEventCalculator load(int index);
     CardsEventCalculator load(std::string id);
     void resetAllCalculator() { cards_calculator_.clear(); };
-    double getCalculatorPairProbability(int index);
-    double getCalculatorPairProbability(std::string id);
 
    private:
     std::vector<CardsEventCalculator> cards_calculator_;
