@@ -9,7 +9,7 @@
 #define MAX_CARD_PATTERN (4)
 #define MIN_POP_CARDS_NUM (4)
 #define MAX_POP_CARDS_NUM (6)
-#define SINGLE_TURN_POP_CARDS (1)
+#define SINGLE_TURN_POP_CARDS (2)
 
 enum class PairCardsCalcType : uint8_t {
     kNoneType = 0,
@@ -167,93 +167,50 @@ class CardsEventCalculator {
     double nextPairProbabilityCalc(PairCardsCalcType type) {
         if (type == PairCardsCalcType::kNormalType) {
             // 庄对子 = P(第一第三张牌重复); 闲对子 = P(第二第四张牌重复)
-            if (current_cards_.getRemainCardsNum() < MIN_POP_CARDS_NUM) {
+            if (current_cards_.getRemainCardsNum() <=
+                (SINGLE_TURN_POP_CARDS + 1)) {
                 std::cout << "nextPairProbabilityCalc failed 1: "
                           << current_cards_.getRemainCardsNum() << std::endl;
                 return 0.0;
             }
-            uint64_t preceding_total_count = permutationCombinationFormula(
-                current_cards_.getRemainCardsNum(), SINGLE_TURN_POP_CARDS);
-            std::cout
-                << "nextPairProbabilityCalc current preceding_total_count: "
-                << preceding_total_count << std::endl;
-            uint64_t latter_total_count = permutationCombinationFormula(
-                current_cards_.getRemainCardsNum() - SINGLE_TURN_POP_CARDS,
-                SINGLE_TURN_POP_CARDS);
-            std::cout << "nextPairProbabilityCalc current latter_total_count: "
-                      << latter_total_count << std::endl;
-            if (preceding_total_count <= 1) {
+            uint64_t total_count = (current_cards_.getRemainCardsNum() - 2) *
+                                   (current_cards_.getRemainCardsNum() - 1) *
+                                   current_cards_.getRemainCardsNum();
+            std::cout << "nextPairProbabilityCalc current total_count: "
+                      << total_count << std::endl;
+            if (total_count <= 1) {
                 std::cout << "nextPairProbabilityCalc failed 2: "
                           << current_cards_.getRemainCardsNum() << std::endl;
                 return 0.0;
             }
+
             int total_choice_count = MAX_CARD_RANK;
-            int preceding_tmp_multi[MAX_CARD_RANK] = {0};
+            int tmp_multi[MAX_CARD_RANK] = {0};
+            CardsBase tmp_cards1 = current_cards_;
             for (uint32_t i = 1; i <= MAX_CARD_RANK; i++) {
-                preceding_tmp_multi[i - 1] =
-                    countDuplicates(current_cards_.getCards(), i);
-                if (preceding_tmp_multi[i - 1] <= 0) total_choice_count--;
+                tmp_multi[i - 1] = countDuplicates(tmp_cards1.getCards(), i);
+                if (tmp_multi[i - 1] <= 0) total_choice_count--;
             }
-            if (total_choice_count < 1) return 0.0;
-            uint64_t preceding_unmatched_count = 0;
-            uint64_t latter_unmatched_count = 0;
-            uint64_t unique_choice_count = 0;
-            for (int i = 0; i + 1 < MAX_CARD_RANK; i++) {
-                for (int j = i + 1; j < MAX_CARD_RANK; j++) {
-                    uint64_t tmp_current_unmatched_count =
-                        preceding_tmp_multi[i] * preceding_tmp_multi[j];
-                    preceding_unmatched_count += tmp_current_unmatched_count;
-                    if (tmp_current_unmatched_count) {
-                        unique_choice_count++;
-                        CardsBase tmp_cards = current_cards_;
-                        tmp_cards.removeCard(i + 1);
-                        tmp_cards.removeCard(j + 1);
-                        int sub_choice_count = MAX_CARD_RANK;
-                        int latter_tmp_multi[MAX_CARD_RANK] = {0};
-                        for (uint32_t count = 1; count <= MAX_CARD_RANK;
-                             count++) {
-                            latter_tmp_multi[count - 1] =
-                                countDuplicates(tmp_cards.getCards(), count);
-                            if (latter_tmp_multi[count - 1] <= 0)
-                                sub_choice_count--;
-                        }
-                        if (sub_choice_count < 1) continue;
-                        for (int k = 0; k + 1 < MAX_CARD_RANK; k++) {
-                            for (int l = k + 1; l < MAX_CARD_RANK; l++) {
-                                latter_unmatched_count +=
-                                    latter_tmp_multi[k] * latter_tmp_multi[l];
-                                ;
-                            }
-                        }
-                    }
-                }
+            if (total_choice_count < 1) return 0;
+
+            uint64_t pair_count = 0;
+            for (int j = 0; j < MAX_CARD_RANK; j++) {
+                if (tmp_multi[j] < 1) continue;
+                CardsBase tmp_cards2 = tmp_cards1;
+                tmp_cards2.removeCard(j + 1);
+                pair_count +=
+                    tmp_multi[j] * calcPairCountsContinuous(tmp_cards2, j + 1);
             }
-            std::cout << "unique_choice_count: " << unique_choice_count
-                      << ", preceding_unmatched_count: "
-                      << preceding_unmatched_count
-                      << ", latter_unmatched_count: " << latter_unmatched_count
-                      << std::endl;
-            if (preceding_total_count < preceding_unmatched_count ||
-                latter_total_count * unique_choice_count <
-                    latter_unmatched_count) {
+            std::cout << "pair_count: " << pair_count << std::endl;
+            if (total_count < pair_count) {
                 std::cout << "nextPairProbabilityCalc failed for "
-                             "total_count "
-                             "incorrect:"
-                          << preceding_total_count << ", " << latter_total_count
-                          << std::endl;
+                             "total_count"
+                          << total_count << std::endl;
                 return 0.0;
             }
-            double preceding_pair_probability =
-                static_cast<double>(preceding_total_count -
-                                    preceding_unmatched_count) /
-                static_cast<double>(preceding_total_count);
-            double latter_pair_probability =
-                1.0 -
-                (static_cast<double>(latter_unmatched_count) /
-                 static_cast<double>(latter_total_count * unique_choice_count));
-            return (preceding_pair_probability > latter_pair_probability)
-                       ? preceding_pair_probability
-                       : latter_pair_probability;
+            double pair_probability = static_cast<double>(pair_count) /
+                                      static_cast<double>(total_count);
+            return pair_probability;
         } else if (type == PairCardsCalcType::kContinueType) {
         } else {
             std::cout
@@ -289,6 +246,14 @@ class CardsEventCalculator {
         }
     }
 
+    uint64_t decreaseSum(int n) {
+        if (n <= 0) {
+            return 0;
+        } else {
+            return n + decreaseSum(n - 1);
+        }
+    }
+
     int countDuplicates(const std::vector<int>& vec, int target) {
         int count = 0;
         for (int num : vec) {
@@ -297,6 +262,28 @@ class CardsEventCalculator {
             }
         }
         return count;
+    }
+
+    uint64_t calcPairCountsContinuous(const CardsBase& operate_cards,
+                                      int pop_card) {
+        int total_choice_count = MAX_CARD_RANK;
+        int tmp_multi[MAX_CARD_RANK] = {0};
+        CardsBase tmp_cards1 = operate_cards;
+        for (uint32_t i = 1; i <= MAX_CARD_RANK; i++) {
+            tmp_multi[i - 1] = countDuplicates(tmp_cards1.getCards(), i);
+            if (tmp_multi[i - 1] <= 0) total_choice_count--;
+        }
+        if (total_choice_count < 1) return 0;
+
+        uint64_t pair_count = 0;
+        for (int j = 0; j < MAX_CARD_RANK; j++) {
+            CardsBase tmp_cards2 = tmp_cards1;
+            if (tmp_multi[j] < 1) continue;
+            tmp_cards2.removeCard(j + 1);
+            pair_count += (tmp_multi[j] *
+                           countDuplicates(tmp_cards2.getCards(), pop_card));
+        }
+        return pair_count;
     }
 
    private:
