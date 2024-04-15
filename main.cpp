@@ -29,7 +29,7 @@ void detectImageChangesTask() {
         cards_receive_data_queue.push(tmp_data);
         std::cout << "input_card:" << tmp_cards.c_str()
                   << " has already updated to cards" << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -37,23 +37,9 @@ void changeCardsCalculateTask() {
     for (;;) {
         cards_receive_data_t tmp_data = {0};
         if (cards_receive_data_queue.try_pop(tmp_data)) {
-            TaskControlExecute::getIns().update(tmp_data);
-            double next_pair_probability = 0.0;
-            if (tmp_data.switch_type ==
-                static_cast<int>(SwitchCardType::kSwitchByIndex)) {
-                next_pair_probability =
-                    TaskControlExecute::getIns().getCalculatorPairProbability(
-                        tmp_data.cards_index, PairCardsCalcType::kNormalType);
-            } else if (tmp_data.switch_type ==
-                       static_cast<int>(SwitchCardType::kSwitchById)) {
-                next_pair_probability =
-                    TaskControlExecute::getIns().getCalculatorPairProbability(
-                        tmp_data.cards_id, PairCardsCalcType::kNormalType);
-            }
-            std::cout << "next_pair_probability:" << next_pair_probability
-                      << std::endl;
+            TaskControlExecute::getIns().execute(tmp_data);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 

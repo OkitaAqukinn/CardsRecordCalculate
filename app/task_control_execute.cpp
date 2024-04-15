@@ -6,7 +6,7 @@ threadsafe_queue<cards_receive_data_t, 1> cards_send_data_queue;
 
 TaskControlExecute::TaskControlExecute() {}
 
-void TaskControlExecute::update(const cards_receive_data_t &data) {
+void TaskControlExecute::execute(const cards_receive_data_t &data) {
     std::cout << "TaskControlExecute receive subCmd: " << data.subCmd
               << std::endl;
     switch (static_cast<SubCmdType>(data.subCmd)) {
@@ -23,9 +23,11 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
             if (data.switch_type ==
                 static_cast<int>(SwitchCardType::kSwitchByIndex)) {
                 del(data.cards_index, data.operate_cards);
+                update(data.cards_index);
             } else if (data.switch_type ==
                        static_cast<int>(SwitchCardType::kSwitchById)) {
                 del(data.cards_id, data.operate_cards);
+                update(data.cards_id);
             }
         } break;
         case SubCmdType::kModifyCards: {
@@ -64,6 +66,32 @@ void TaskControlExecute::update(const cards_receive_data_t &data) {
         } break;
         default: {
             std::cout << "Unknown subCmd: " << data.subCmd << std::endl;
+        }
+    }
+}
+
+void TaskControlExecute::update(int index) {
+    if (!checkIfIndexValid(index)) {
+        std::cout << "execute execute update, index: " << index << std::endl;
+        return;
+    }
+    std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
+    for (it; it != cards_calculator_.end(); it++) {
+        if (it->getCardsIndex() == index) {
+            it->update();
+        }
+    }
+}
+
+void TaskControlExecute::update(std::string id) {
+    if (!checkIfIdValid(id)) {
+        std::cout << "execute execute update, id: " << id << std::endl;
+        return;
+    }
+    std::vector<CardsEventCalculator>::iterator it = cards_calculator_.begin();
+    for (it; it != cards_calculator_.end(); it++) {
+        if (it->getCardsId() == id) {
+            it->update();
         }
     }
 }
@@ -218,14 +246,4 @@ CardsEventCalculator TaskControlExecute::load(std::string id) {
     }
     std::cout << ";oad failed, id: " << id << std::endl;
     return CardsEventCalculator(0, 255, "-1");
-}
-
-double TaskControlExecute::getCalculatorPairProbability(
-    int index, PairCardsCalcType type) {
-    return load(index).nextPairProbabilityCalc(type);
-}
-
-double TaskControlExecute::getCalculatorPairProbability(
-    std::string id, PairCardsCalcType type) {
-    return load(id).nextPairProbabilityCalc(type);
 }
