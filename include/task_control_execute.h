@@ -40,11 +40,11 @@ class TaskControlExecute {
     }
 
    public:
-    void update(const cards_receive_data_t &data);
-    double getCalculatorPairProbability(int index, PairCardsCalcType type);
-    double getCalculatorPairProbability(std::string id, PairCardsCalcType type);
+    void execute(const cards_receive_data_t &data);
 
    private:
+    void update(int index);
+    void update(std::string id);
     bool checkIfIndexValid(int index);
     bool checkIfIdValid(std::string id);
     void addCalculator(int index);
