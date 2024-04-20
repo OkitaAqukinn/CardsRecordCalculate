@@ -6,11 +6,11 @@
 
 threadsafe_queue<cards_receive_data_t, 5> cards_receive_data_queue;
 
-void detectImageChangesTask() {
+void manualDebugCardsTask() {
     for (;;) {
         // 传入字符串格式: cmd;type;index;id;card1,card2,card3,card4,card5,card6
         std::string input_card;
-        std::cout << "press in the new cards here:" << std::endl;
+        std::cout << "press in the new cards manually here :" << std::endl;
         std::cin >> input_card;
         cards_receive_data_t tmp_data = {0};
         std::string tmp_cards;
@@ -27,7 +27,7 @@ void detectImageChangesTask() {
         tmp_data.operate_cards.push_back(card5);
         tmp_data.operate_cards.push_back(card6);
         cards_receive_data_queue.push(tmp_data);
-        std::cout << "input_card:" << tmp_cards.c_str()
+        std::cout << "manualDebugCardsTask input_card:" << tmp_cards.c_str()
                   << " has already updated to cards" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -43,15 +43,45 @@ void changeCardsCalculateTask() {
     }
 }
 
+void detectImageChangesTask() {
+    for (;;) {
+        // 组包字符串格式: cmd;type;index;id;card1,card2,card3,card4,card5,card6
+        if (false) {
+            cards_receive_data_t tmp_data = {0};
+            std::string detect_cards;
+
+            tmp_data.subCmd = static_cast<int>(SubCmdType::kDeleteCards);
+            tmp_data.switch_type =
+                static_cast<int>(SwitchCardType::kSwitchById);
+            tmp_data.cards_id = "test";
+            tmp_data.operate_cards.push_back(1);
+            tmp_data.operate_cards.push_back(2);
+            tmp_data.operate_cards.push_back(3);
+            tmp_data.operate_cards.push_back(4);
+            tmp_data.operate_cards.push_back(5);
+            tmp_data.operate_cards.push_back(6);
+            cards_receive_data_queue.push(tmp_data);
+            std::cout << "detectImageChangesTask input_card:" << 1
+                      << " has already updated to cards" << std::endl;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
 int main() {
     std::thread calculator(changeCardsCalculateTask);
     std::cout << "changeCardsCalculateTask created!!!" << std::endl;
+    std::thread debugger(manualDebugCardsTask);
+    std::cout << "manualDebugCardsTask created!!!" << std::endl;
     std::thread detector(detectImageChangesTask);
     std::cout << "detectImageChangesTask created!!!" << std::endl;
 
-    detector.join();
-    std::cout << "detectImageChangesTask quit!!!" << std::endl;
     calculator.join();
     std::cout << "changeCardsCalculateTask quit!!!" << std::endl;
+    debugger.join();
+    std::cout << "manualDebugCardsTask quit!!!" << std::endl;
+    detector.join();
+    std::cout << "detectImageChangesTask quit!!!" << std::endl;
+
     return 0;
 }
