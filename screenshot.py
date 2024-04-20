@@ -1,16 +1,15 @@
 import os
 import pyautogui
 
-fp = r'C:\\Template\\CardsRecordCalculate\\cache' #指定文件夹
+fp = r'./cache' #指定文件夹
  
 # 创建文件夹
 if not os.path.exists(fp):
     os.makedirs(fp)
  
 #开始截屏
-i = 0
+i = 1
 while True:
-    i += 1
     b = str(i)
     pyautogui.FAILSAFE = True
     pyautogui.PAUSE = 1.0
