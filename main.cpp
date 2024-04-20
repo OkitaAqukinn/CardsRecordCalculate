@@ -64,24 +64,24 @@ void detectImageChangesTask() {
             std::cout << "detectImageChangesTask input_card:" << 1
                       << " has already updated to cards" << std::endl;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
 int main() {
     std::thread calculator(changeCardsCalculateTask);
     std::cout << "changeCardsCalculateTask created!!!" << std::endl;
-    std::thread debugger(manualDebugCardsTask);
-    std::cout << "manualDebugCardsTask created!!!" << std::endl;
     std::thread detector(detectImageChangesTask);
     std::cout << "detectImageChangesTask created!!!" << std::endl;
+    std::thread debugger(manualDebugCardsTask);
+    std::cout << "manualDebugCardsTask created!!!" << std::endl;
 
     calculator.join();
     std::cout << "changeCardsCalculateTask quit!!!" << std::endl;
-    debugger.join();
-    std::cout << "manualDebugCardsTask quit!!!" << std::endl;
     detector.join();
     std::cout << "detectImageChangesTask quit!!!" << std::endl;
+    debugger.join();
+    std::cout << "manualDebugCardsTask quit!!!" << std::endl;
 
     return 0;
 }
