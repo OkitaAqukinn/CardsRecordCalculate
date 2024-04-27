@@ -101,7 +101,7 @@ class CardsBase {
 class CardsEventCalculator {
    public:
     CardsEventCalculator(int suit_num, int index, std::string id)
-        : croupier_pair_probability_(0.0), player_pair_probability_(0.0) {
+        : banker_pair_probability_(0.0), player_pair_probability_(0.0) {
         reset(suit_num);
         index_ = index;
         id_ = id;
@@ -131,10 +131,10 @@ class CardsEventCalculator {
             std::cout << "current cards [" << i << "]: " << tmp_multi[i - 1]
                       << std::endl;
         }
-        std::cout << "current cards next croupier_pair_probability: "
-                  << croupier_pair_probability_ << std::endl;
         std::cout << "current cards next player_pair_probability: "
                   << player_pair_probability_ << std::endl;
+        std::cout << "current cards next banker_pair_probability: "
+                  << banker_pair_probability_ << std::endl;
     }
 
    private:
@@ -183,8 +183,8 @@ class CardsEventCalculator {
 
     void updatePairEventProbability(PairCardsCalcType type) {
         if (type == PairCardsCalcType::kNormalType) {
-            updateCroupierPairProbability();
             updatePlayerPairProbability();
+            updateBankerPairProbability();
         } else if (type == PairCardsCalcType::kContinueType) {
         } else {
             std::cout
@@ -193,11 +193,11 @@ class CardsEventCalculator {
         }
     }
 
-    void updateCroupierPairProbability() {
-        croupier_pair_probability_ = calcPairProbability(current_cards_);
+    void updatePlayerPairProbability() {
+        player_pair_probability_ = calcPairProbability(current_cards_);
     }
 
-    void updatePlayerPairProbability() {
+    void updateBankerPairProbability() {
         int tmp_multi[MAX_CARD_RANK] = {0};
         double tmp_pair_probability = 0.0;
         for (uint32_t i = 1; i <= MAX_CARD_RANK; i++) {
@@ -212,7 +212,7 @@ class CardsEventCalculator {
                  static_cast<double>(tmp_cards1.getRemainCardsNum())) *
                 calcPairProbability(tmp_cards1);
         }
-        player_pair_probability_ = tmp_pair_probability;
+        banker_pair_probability_ = tmp_pair_probability;
     }
 
     double calcPairProbability(const CardsBase& operate_cards) {
@@ -332,7 +332,7 @@ class CardsEventCalculator {
     CardsBase current_cards_;
     int index_;
     std::string id_;
-    double croupier_pair_probability_;
+    double banker_pair_probability_;
     double player_pair_probability_;
 };
 #endif  // CALCULATOR_H

@@ -29,11 +29,12 @@ while True:
     # 加载被识别图片和模板图片
     image = cv2.imread(image_path)
     count = -1
-    max_source_file_count = 104
+    max_source_file_count = 103
     while count < max_source_file_count:
         count += 1
         template_path = str(src) + '/' + str(count) + '.png'
         if not os.path.exists(template_path):
+            print("source_file_name: ", count)
             continue
         template = cv2.imread(template_path)
 
@@ -42,7 +43,8 @@ while True:
 
         # 找到最大值和最大值的位置
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        print("source_file_name: ", count, "match value: ", max_val, min_val)
+        if(max_val > 0.9):
+            print("source_file_name: ", int(1+(count/8)), "match probability: ", max_val)
 
         # # 找到匹配位置的左上角和右下角坐标
         # w, h = template.shape[:2]
@@ -58,5 +60,4 @@ while True:
         # cv2.destroyAllWindows()
 
     os.remove(image_path)            #删除截屏
-    time.sleep(1)                    #设置截屏时间间隔
  
