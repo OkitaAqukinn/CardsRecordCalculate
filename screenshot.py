@@ -13,18 +13,47 @@ if not os.path.exists(fp):
     os.makedirs(fp)
 if not os.path.exists(src):
     os.makedirs(src)
- 
-#开始截屏
-while True:
+
+image_match_probability = 0.85
+
+screenshot_ready_flag = False
+def screenshot( image_path ):
+    global screenshot_ready_flag
     t = time.localtime()
     b = str(t.tm_year) + str(t.tm_mon) + str(t.tm_mday) + str(t.tm_hour) + str(t.tm_min) + str(t.tm_sec)
     pyautogui.FAILSAFE = True
     pyautogui.PAUSE = 0.1
-    recording = pyautogui.screenshot()  #截屏
-    fn = b + '.png'
-    print("screenshot success " + fn)
-    image_path = os.path.join(fp, fn)    #截屏截到的图片保存地址，这里保存到了刚才创建的文件夹中
+    recording = pyautogui.screenshot()   #截屏
+    print("screenshot success " + b)
     recording.save(image_path)           #保存图片
+
+    image = cv2.imread(image_path)
+    template_path = str(src) + '/' + 'background.png'
+    if not os.path.exists(template_path):
+        print("something wrong while loading: ", template_path)
+        return False
+    template = cv2.imread(template_path)
+    result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    if(max_val > image_match_probability and screenshot_ready_flag == False):
+        print("background match, time: ", b)
+        print("Ready to prepare screenshot.")
+        screenshot_ready_flag = True
+    if(max_val < image_match_probability and screenshot_ready_flag == True):
+        print("screenshot prepared, time: ", b)
+        recording.save(image_path)           #保存图片
+        screenshot_ready_flag = False
+        return True
+    os.remove(image_path)            #删除截屏
+    return False
+
+#开始截屏
+while True:
+    fn = 'screenshot' + '.png'
+    image_path = os.path.join(fp, fn)
+    if(screenshot(image_path) == False):
+        time.sleep(0.5)                    #设置截屏时间间隔
+        continue
 
     # 加载被识别图片和模板图片
     image = cv2.imread(image_path)
@@ -43,7 +72,7 @@ while True:
 
         # 找到最大值和最大值的位置
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        if(max_val > 0.9):
+        if(max_val > image_match_probability):
             print("source_file_name: ", int(1+(count/8)), "match probability: ", max_val)
 
         # # 找到匹配位置的左上角和右下角坐标
