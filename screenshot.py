@@ -15,9 +15,45 @@ if not os.path.exists(src):
     os.makedirs(src)
 
 image_match_probability = 0.85
+def clipImage(image_path):
+    image = cv2.imread(image_path)
+    template_path = str(src) + '/' + 'logo.png'
+    if not os.path.exists(template_path):
+        print("something wrong while clipping image: ", template_path)
+        return False
+    template = cv2.imread(template_path)
+    result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    print("clipImage match logo probability: ", max_val)
+    if(max_val > image_match_probability):
+        w, h = template.shape[:2]
+        logo_top_left = max_loc
+        logo_bottom_right = (logo_top_left[0] + h, logo_top_left[1] + w)
+
+        cropped_top_left = (logo_top_left[0] - 120, logo_top_left[1] - 300)
+        cropped_bottom_left = (cropped_top_left[0] + 180, logo_top_left[1] - 300)
+        count = 0
+        gain = 0
+        max_image_count = 6
+        while count < max_image_count:
+            if (count == 3):
+                last_gain = gain + h + 8
+            else:
+                last_gain = gain
+
+            if(count == 0 or count == 5):
+                gain += 217
+            elif (count == 3):
+                gain = last_gain + 95
+            else:
+                gain += 95
+            cropped = image[cropped_top_left[0]:cropped_bottom_left[0], 
+                            (cropped_top_left[1] + last_gain):(cropped_bottom_left[1] + gain)]  # 裁剪坐标为[y0:y1, x0:x1]
+            cv2.imwrite(str(fp) + '/' + str(count) + '.png', cropped)
+            count += 1
 
 screenshot_ready_flag = False
-def screenshot( image_path ):
+def screenshot(image_path):
     global screenshot_ready_flag
     t = time.localtime()
     b = str(t.tm_year) + str(t.tm_mon) + str(t.tm_mday) + str(t.tm_hour) + str(t.tm_min) + str(t.tm_sec)
@@ -40,19 +76,20 @@ def screenshot( image_path ):
         print("Ready to prepare screenshot.")
         screenshot_ready_flag = True
     if(max_val < image_match_probability and screenshot_ready_flag == True):
+        time.sleep(0.8)
         print("screenshot prepared, time: ", b)
         recording.save(image_path)           #保存图片
+        clipImage(image_path)
         screenshot_ready_flag = False
         return True
     os.remove(image_path)            #删除截屏
     return False
 
-#开始截屏
 while True:
     fn = 'screenshot' + '.png'
     image_path = os.path.join(fp, fn)
     if(screenshot(image_path) == False):
-        time.sleep(0.5)                    #设置截屏时间间隔
+        time.sleep(0.4)                    #设置截屏时间间隔
         continue
 
     # 加载被识别图片和模板图片
