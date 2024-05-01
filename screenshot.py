@@ -14,47 +14,83 @@ if not os.path.exists(fp):
 if not os.path.exists(src):
     os.makedirs(src)
 
-image_match_probability = 0.85
-def clipImage(image_path):
-    image = cv2.imread(image_path)
-    template_path = str(src) + '/' + 'logo.png'
-    if not os.path.exists(template_path):
-        print("something wrong while clipping image: ", template_path)
-        return False
-    template = cv2.imread(template_path)
-    result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-    print("clipImage match logo probability: ", max_val)
-    if(max_val > image_match_probability):
-        w, h = template.shape[:2]
-        logo_top_left = max_loc
-        logo_bottom_right = (logo_top_left[0] + h, logo_top_left[1] + w)
+image_match_probability = 0.68
+middle1_top_left = 0
+middle1_top_right = 0
+middle1_bottom_left = 0
+middle1_bottom_right = 0
+middle2_top_left = 0
+middle2_top_right = 0
+middle2_bottom_left = 0
+middle2_bottom_right = 0
 
-        cropped_top_left = (logo_top_left[0] - 120, logo_top_left[1] - 300)
-        cropped_bottom_left = (cropped_top_left[0] + 180, logo_top_left[1] - 300)
+def clipImage(image_path):
+    global middle1_top_left
+    global middle1_top_right
+    global middle1_bottom_left
+    global middle1_bottom_right
+    global middle2_top_left
+    global middle2_top_right
+    global middle2_bottom_left
+    global middle2_bottom_right
+    image = cv2.imread(image_path)
+    logo_path = str(src) + '/' + 'logo.png'
+    if not os.path.exists(logo_path):
+        print("something wrong while clipping image: ", logo_path)
+        return False
+    logo = cv2.imread(logo_path)
+    logo_result = cv2.matchTemplate(image, logo, cv2.TM_CCOEFF_NORMED)
+    logo_min_val, logo_max_val, logo_min_loc, logo_max_loc = cv2.minMaxLoc(logo_result)
+    print("clipImage match logo probability: ", logo_max_val)
+    if(logo_max_val > image_match_probability):
+        logo_h, logo_w = logo.shape[:2]
+        logo_top_left = logo_max_loc
+        logo_top_right = (logo_top_left[0] + logo_w, logo_top_left[1])
+        logo_middle_x = (int)(logo_top_left[0] + logo_w / 2)
+        cropped_top_left = (middle1_top_left[0] - 2 * (middle2_top_left[0] - middle1_top_left[0]), middle1_top_left[1])
+        cropped_bottom_left = (cropped_top_left[0], middle1_bottom_left[1])
         count = 0
         gain = 0
+        last_gain = 0
+        margin = (int)(logo_w / 2)
         max_image_count = 6
         while count < max_image_count:
-            if (count == 3):
-                last_gain = gain + h + 8
-            else:
-                last_gain = gain
-
-            if(count == 0 or count == 5):
-                gain += 217
+            if(count == 0):
+                last_gain = cropped_top_left[0]
+                gain = middle1_top_left[0] + margin
+            elif (count == 1):
+                last_gain = middle1_top_left[0] - margin
+                gain = middle2_top_left[0] + margin
+            elif (count == 2):
+                last_gain = middle2_top_left[0] - margin
+                gain = logo_top_left[0] + margin
             elif (count == 3):
-                gain = last_gain + 95
-            else:
-                gain += 95
-            cropped = image[cropped_top_left[0]:cropped_bottom_left[0], 
-                            (cropped_top_left[1] + last_gain):(cropped_bottom_left[1] + gain)]  # 裁剪坐标为[y0:y1, x0:x1]
+                last_gain = logo_top_right[0] - margin
+                gain = logo_middle_x + (logo_middle_x - middle2_top_left[0]) + margin
+            elif (count == 4):
+                last_gain = logo_middle_x + (logo_middle_x - middle2_top_left[0]) - margin
+                gain = logo_middle_x + (logo_middle_x - middle1_top_left[0]) + margin
+            elif (count == 5):
+                last_gain = logo_middle_x + (logo_middle_x - middle1_top_left[0]) - margin
+                gain = logo_middle_x + (logo_middle_x - cropped_top_left[0])
+            print("cropped image count: ", count, "cropped_top_left[1]: ", cropped_top_left[1], "cropped_bottom_left[1]: ", cropped_bottom_left[1])
+            print("(last_gain): ", (last_gain), "(gain) ", (gain))
+            cropped = image[cropped_top_left[1]:cropped_bottom_left[1], 
+                            last_gain:gain]  # 裁剪坐标为[y0:y1, x0:x1]
             cv2.imwrite(str(fp) + '/' + str(count) + '.png', cropped)
             count += 1
 
 screenshot_ready_flag = False
 def screenshot(image_path):
     global screenshot_ready_flag
+    global middle1_top_left
+    global middle1_top_right
+    global middle1_bottom_left
+    global middle1_bottom_right
+    global middle2_top_left
+    global middle2_top_right
+    global middle2_bottom_left
+    global middle2_bottom_right
     t = time.localtime()
     b = str(t.tm_year) + str(t.tm_mon) + str(t.tm_mday) + str(t.tm_hour) + str(t.tm_min) + str(t.tm_sec)
     pyautogui.FAILSAFE = True
@@ -71,13 +107,43 @@ def screenshot(image_path):
     template = cv2.imread(template_path)
     result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    print("screenshot match background probability: ", max_val)
     if(max_val > image_match_probability and screenshot_ready_flag == False):
+        time.sleep(0.8)
+        image = cv2.imread(image_path)
         print("background match, time: ", b)
         print("Ready to prepare screenshot.")
+        middle1_path = str(src) + '/' + 'middle1.png'
+        if not os.path.exists(middle1_path):
+            print("something wrong while loading image: ", middle1_path)
+            return False
+        middle1 = cv2.imread(middle1_path)
+        middle1_result = cv2.matchTemplate(image, middle1, cv2.TM_CCOEFF_NORMED)
+        middle1_min_val, middle1_max_val, middle1_min_loc, middle1_max_loc = cv2.minMaxLoc(middle1_result)
+        middle1_h, middle1_w = middle1.shape[:2]
+        middle1_top_left = middle1_max_loc
+        middle1_top_right = (middle1_top_left[0] + middle1_w, middle1_top_left[1])
+        middle1_bottom_left = (middle1_top_left[0], middle1_top_left[1] + middle1_h)
+        middle1_bottom_right = (middle1_top_right[0] + middle1_w, middle1_top_right[1] + middle1_h)
+        middle2_path = str(src) + '/' + 'middle2.png'
+        if not os.path.exists(middle2_path):
+            print("something wrong while loading image: ", middle2_path)
+            return False
+        middle2 = cv2.imread(middle2_path)
+        middle2_result = cv2.matchTemplate(image, middle2, cv2.TM_CCOEFF_NORMED)
+        middle2_min_val, middle2_max_val, middle2_min_loc, middle2_max_loc = cv2.minMaxLoc(middle2_result)
+        middle2_h, middle2_w = middle2.shape[:2]
+        middle2_top_left = middle2_max_loc
+        middle2_top_right = (middle2_top_left[0] + middle2_w, middle2_top_left[1])
+        middle2_bottom_left = (middle2_top_left[0], middle2_top_left[1] + middle2_h)
+        middle2_bottom_right = (middle2_top_right[0] + middle2_w, middle2_top_right[1] + middle2_h)
         screenshot_ready_flag = True
     if(max_val < image_match_probability and screenshot_ready_flag == True):
         time.sleep(0.8)
         print("screenshot prepared, time: ", b)
+        pyautogui.FAILSAFE = True
+        pyautogui.PAUSE = 0.1
+        recording = pyautogui.screenshot()   #截屏
         recording.save(image_path)           #保存图片
         clipImage(image_path)
         screenshot_ready_flag = False
@@ -85,22 +151,32 @@ def screenshot(image_path):
     os.remove(image_path)            #删除截屏
     return False
 
+def debugImage(image, top_left, bottom_right):
+    # 在被识别图片上标记匹配位置
+    cv2.rectangle(image, top_left, bottom_right, (0, 0, 255), 2)
+
+    # 显示结果
+    cv2.imshow('Result', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 while True:
     fn = 'screenshot' + '.png'
     image_path = os.path.join(fp, fn)
     if(screenshot(image_path) == False):
-        time.sleep(0.4)                    #设置截屏时间间隔
+        time.sleep(0.2)                    #设置截屏时间间隔
         continue
 
     # 加载被识别图片和模板图片
-    image = cv2.imread(image_path)
-    count = -1
+    cache_path = str(fp) + '/' + 'logo.png'
+    image = cv2.imread(cache_path)
+    source_count = -1
     max_source_file_count = 103
-    while count < max_source_file_count:
-        count += 1
-        template_path = str(src) + '/' + str(count) + '.png'
+    while source_count < max_source_file_count:
+        source_count += 1
+        template_path = str(src) + '/' + str(source_count) + '.png'
         if not os.path.exists(template_path):
-            print("source_file_name: ", count)
+            print("source_file_name: ", source_count)
             continue
         template = cv2.imread(template_path)
 
@@ -110,20 +186,7 @@ while True:
         # 找到最大值和最大值的位置
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
         if(max_val > image_match_probability):
-            print("source_file_name: ", int(1+(count/8)), "match probability: ", max_val)
-
-        # # 找到匹配位置的左上角和右下角坐标
-        # w, h = template.shape[:2]
-        # top_left = max_loc
-        # bottom_right = (top_left[0] + h, top_left[1] + w)
-
-        # # 在被识别图片上标记匹配位置
-        # cv2.rectangle(image, top_left, bottom_right, (0, 0, 255), 2)
-
-        # # 显示结果
-        # cv2.imshow('Result', image)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+            print("source_file_name: ", int(1+(source_count/8)), "match probability: ", max_val)
 
     os.remove(image_path)            #删除截屏
  
