@@ -24,6 +24,10 @@ middle2_top_right = 0
 middle2_bottom_left = 0
 middle2_bottom_right = 0
 
+standard_screenshot_width = 1920
+standard_screenshot_height = 1080
+standard_width_height_scale = standard_screenshot_width / standard_screenshot_height
+
 def clipImage(image_path):
     global middle1_top_left
     global middle1_top_right
@@ -109,7 +113,7 @@ def screenshot(image_path):
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
     print("screenshot match background probability: ", max_val)
     if(max_val > image_match_probability and screenshot_ready_flag == False):
-        time.sleep(0.8)
+        time.sleep(1.3)
         image = cv2.imread(image_path)
         print("background match, time: ", b)
         print("Ready to prepare screenshot.")
@@ -139,17 +143,40 @@ def screenshot(image_path):
         middle2_bottom_right = (middle2_top_right[0] + middle2_w, middle2_top_right[1] + middle2_h)
         screenshot_ready_flag = True
     if(max_val < image_match_probability and screenshot_ready_flag == True):
+        os.remove(image_path)
         time.sleep(0.8)
         print("screenshot prepared, time: ", b)
         pyautogui.FAILSAFE = True
         pyautogui.PAUSE = 0.1
         recording = pyautogui.screenshot()   #截屏
-        recording.save(image_path)           #保存图片
+        recording.save(image_path)
+        image = cv2.imread(image_path)
+        current_screenshot_h, current_screenshot_w = image.shape[:2]
+        current_width_height_scale = current_screenshot_w / current_screenshot_h
+        width_scale = standard_screenshot_width / current_screenshot_w
+        modify_screenshot_width = int(current_screenshot_w * width_scale)
+        modify_screenshot_height = int(modify_screenshot_width / current_width_height_scale)
+        image_resize = cv2.resize(image, (modify_screenshot_width, modify_screenshot_height))
+        cv2.imwrite(image_path, image_resize)           #保存图片
         clipImage(image_path)
         screenshot_ready_flag = False
         return True
     os.remove(image_path)            #删除截屏
     return False
+
+def getImageMatchResult(source_path, template_path):
+    if not os.path.exists(source_path):
+        print("template_path_name load failed in getImageMatchResult: ", source_count)
+        return False
+    if not os.path.exists(template_path):
+        print("source_file_name load failed in getImageMatchResult: ", template_path)
+        return False
+    
+    source = cv2.imread(source_path)
+    template = cv2.imread(template_path)
+    result = cv2.matchTemplate(source, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    return max_val
 
 def debugImage(image, top_left, bottom_right):
     # 在被识别图片上标记匹配位置
@@ -160,6 +187,7 @@ def debugImage(image, top_left, bottom_right):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+game_id = input("please press in current game id:")
 while True:
     fn = 'screenshot' + '.png'
     image_path = os.path.join(fp, fn)
@@ -168,25 +196,40 @@ while True:
         continue
 
     # 加载被识别图片和模板图片
-    cache_path = str(fp) + '/' + 'logo.png'
-    image = cv2.imread(cache_path)
-    source_count = -1
-    max_source_file_count = 103
-    while source_count < max_source_file_count:
-        source_count += 1
-        template_path = str(src) + '/' + str(source_count) + '.png'
-        if not os.path.exists(template_path):
-            print("source_file_name: ", source_count)
-            continue
-        template = cv2.imread(template_path)
+    cache_count = 0
+    max_cache_file_count = 6
+    kConfirmMatchCardsProbability = 0.45
+    result_list = [0, 0, 0, 0, 0, 0]
+    while cache_count < max_cache_file_count:
+        cache_path = str(fp) + '/' + str(cache_count) + '.png'
+        source_count = 0
+        if(cache_count == 0 or cache_count == 5):
+            source_count = 1
+        max_source_file_count = 103
+        current_max_match_probability = 0.0
+        current_max_match_index = -1
+        while source_count < max_source_file_count:
+            template_path = str(src) + '/' + str(source_count) + '.png'
+            current_match_probability = getImageMatchResult(cache_path, template_path)
+            if(current_match_probability > kConfirmMatchCardsProbability and current_match_probability > current_max_match_probability):
+                current_max_match_probability = current_match_probability
+                current_max_match_index = source_count
+            source_count += 2
+        if(current_max_match_probability > kConfirmMatchCardsProbability):
+            result_list[cache_count] = int(1 + (current_max_match_index / 8))
+            print("cache_count: ", cache_count, "current_max_match_index: ", current_max_match_index, "current_max_match_probability: ", current_max_match_probability)
+        else:
+            print("cache_count: ", cache_count, "failed to match any source cards")
+        cache_count += 1
 
-        # 模板匹配
-        result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-
-        # 找到最大值和最大值的位置
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        if(max_val > image_match_probability):
-            print("source_file_name: ", int(1+(source_count/8)), "match probability: ", max_val)
-
+    result_path = str(fp) + '/' + str(game_id) + '.txt'
+    if not os.path.exists(result_path):
+        with open(result_path, 'w') as f:
+            result_str = ''
+            for i in range(0, len(result_list)):
+                result_str = str(result_list[i]) + ';'
+            f.write(result_str)
+    else:
+        print("last result has not updated into cpp file yet, do not update again.")
     os.remove(image_path)            #删除截屏
  
