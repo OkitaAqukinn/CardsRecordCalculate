@@ -227,7 +227,10 @@ while True:
         with open(result_path, 'w') as f:
             result_str = ''
             for i in range(0, len(result_list)):
-                result_str = str(result_list[i]) + ';'
+                if(i == len(result_list) - 1):
+                    result_str = result_str + str(result_list[i])
+                else:
+                    result_str = result_str + str(result_list[i]) + ';'
             f.write(result_str)
     else:
         print("last result has not updated into cpp file yet, do not update again.")
