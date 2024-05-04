@@ -230,7 +230,7 @@ while True:
                 if(i == len(result_list) - 1):
                     result_str = result_str + str(result_list[i])
                 else:
-                    result_str = result_str + str(result_list[i]) + ';'
+                    result_str = result_str + str(result_list[i]) + ','
             f.write(result_str)
     else:
         print("last result has not updated into cpp file yet, do not update again.")
