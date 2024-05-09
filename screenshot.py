@@ -1,6 +1,7 @@
 import os
 import pyautogui
 import time
+import sys
 
 import cv2
 import numpy as np
@@ -187,6 +188,42 @@ def debugImage(image, top_left, bottom_right):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def initializeImage(source_image, ref_width, ref_height):
+    image = cv2.imread(source_image)
+    image_resize = cv2.resize(image, (ref_width, ref_height))
+    cv2.imwrite(source_image, image_resize)           #保存图片
+
+sample1_path = str(src) + '/' + 'sample1.png'
+if not os.path.exists(sample1_path):
+    print("sample1_path is not exit, please create sample1.png first: ", sample1_path)
+    sys.exit(1)
+sample2_path = str(src) + '/' + 'sample2.png'
+if not os.path.exists(sample2_path):
+    print("sample2_path is not exit, please create sample2.png first: ", sample2_path)
+    sys.exit(1)
+
+print("Initializing images from sample1.png ...")
+image = cv2.imread(sample1_path)
+sample1_h, sample1_w = image.shape[:2]
+max_source_file_count = 104
+source_count = 0
+while source_count < max_source_file_count:
+    ref_path = str(src) + '/' + str(source_count) + '.png'
+    initializeImage(ref_path, sample1_w, sample1_h)
+    source_count += 2
+print("Initialized images from sample1.png successfully!")
+
+print("Initializing images from sample2.png ...")
+image = cv2.imread(sample2_path)
+sample2_h, sample2_w = image.shape[:2]
+max_source_file_count = 104
+source_count = 1
+while source_count < max_source_file_count:
+    ref_path = str(src) + '/' + str(source_count) + '.png'
+    initializeImage(ref_path, sample2_w, sample2_h)
+    source_count += 2
+print("Initialized images from sample2.png successfully!")
+
 game_id = input("please press in current game id:")
 while True:
     fn = 'screenshot' + '.png'
@@ -198,14 +235,14 @@ while True:
     # 加载被识别图片和模板图片
     cache_count = 0
     max_cache_file_count = 6
-    kConfirmMatchCardsProbability = 0.45
+    kConfirmMatchCardsProbability = 0.65
     result_list = [0, 0, 0, 0, 0, 0]
     while cache_count < max_cache_file_count:
         cache_path = str(fp) + '/' + str(cache_count) + '.png'
         source_count = 0
         if(cache_count == 0 or cache_count == 5):
             source_count = 1
-        max_source_file_count = 103
+        max_source_file_count = 104
         current_max_match_probability = 0.0
         current_max_match_index = -1
         while source_count < max_source_file_count:
