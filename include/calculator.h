@@ -225,8 +225,6 @@ class CardsEventCalculator {
         uint64_t total_count = (operate_cards.getRemainCardsNum() - 2) *
                                (operate_cards.getRemainCardsNum() - 1) *
                                operate_cards.getRemainCardsNum();
-        std::cout << "nextPairProbabilityCalc current total_count: "
-                  << total_count << std::endl;
         if (total_count <= 1) {
             std::cout << "nextPairProbabilityCalc failed 2: "
                       << operate_cards.getRemainCardsNum() << std::endl;
@@ -250,7 +248,6 @@ class CardsEventCalculator {
             pair_count +=
                 tmp_multi[j] * calcPairCountsContinuous(tmp_cards2, j + 1);
         }
-        std::cout << "pair_count: " << pair_count << std::endl;
         if (total_count < pair_count) {
             std::cout << "nextPairProbabilityCalc failed for "
                          "total_count"

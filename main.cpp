@@ -1,3 +1,4 @@
+#include <direct.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -81,10 +82,12 @@ void changeCardsCalculateTask() {
 }
 
 void detectImageChangesTask() {
-    std::string result_path = __FILE__;
+    char szBuf[512] = {0};
+    getcwd(szBuf, sizeof(szBuf) - 1);
+    std::string result_path = szBuf;
     std::string current_file_name = "main.cpp";
     result_path = removeSubstring(result_path, current_file_name);
-    result_path = result_path + "cache";
+    result_path = result_path + "/" + "cache";
     for (int16_t i = 0; i < result_path.size(); i++) {
         if (result_path[i] == '\\') {
             result_path[i] = '/';
